@@ -1,0 +1,51 @@
+.container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.content {
+  flex: 1;
+  width: 100%;
+  background-color: #f7f7f7;
+}
+
+.tab-bar {
+  width: 100%;
+  height: 100rpx;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  background-color: #ffffff;
+  border-top: 1rpx solid #eeeeee;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+}
+
+.tab-item {
+  font-size: 28rpx;
+  color: #333333;
+  padding: 20rpx 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.active {
+  color: #07c160;  /* 微信绿色 */
+  font-weight: bold;
+}
+
+.active::after {
+  content: '';
+  position: absolute;
+  top: -6rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40rpx;
+  height: 4rpx;
+  background-color: #07c160;
+} 

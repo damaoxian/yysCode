@@ -1,0 +1,25 @@
+<view class="container">
+  <!-- 内容区域 -->
+  <view class="content">
+    <view wx:if="{{currentTab == 0}}">测试页面内容</view>
+    <view wx:if="{{currentTab == 1}}">录入页面内容</view>
+    <view wx:if="{{currentTab == 2}}">整理页面内容</view>
+    <view wx:if="{{currentTab == 3}}">记录页面内容</view>
+  </view>
+
+  <!-- 底部导航栏 -->
+  <view class="tab-bar">
+    <view class="tab-item {{currentTab==0 ? 'active' : ''}}" bindtap="switchTab" data-index="0">
+      测试
+    </view>
+    <view class="tab-item {{currentTab==1 ? 'active' : ''}}" bindtap="switchTab" data-index="1">
+      录入
+    </view>
+    <view class="tab-item {{currentTab==2 ? 'active' : ''}}" bindtap="switchTab" data-index="2">
+      整理
+    </view>
+    <view class="tab-item {{currentTab==3 ? 'active' : ''}}" bindtap="switchTab" data-index="3">
+      记录
+    </view>
+  </view>
+</view> 
