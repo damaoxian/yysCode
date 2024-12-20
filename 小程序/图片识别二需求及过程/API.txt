@@ -1,0 +1,21 @@
+应用名称:单词背诵
+应用描述:应用于学生背诵单词
+
+appID:6154040
+
+API KEY:LdyMS3G70tLmUH9IPXWLRk8c
+
+SECERT KEY:6hH9ljtqTKiSCtzwGTWdRaUkXs6Sr4Sr
+
+
+帮我用VB创建一个文字识别应用，要求使用百度OCR
+
+
+    Private Const API_KEY As String = "LdyMS3G70tLmUH9IPXWLRk8c"
+    Private Const SECRET_KEY As String = "6hH9ljtqTKiSCtzwGTWdRaUkXs6Sr4Sr"
+    Private Const APP_ID As String = "6154040"
+	
+	
+啊康 6w/日
+
+哥飞 

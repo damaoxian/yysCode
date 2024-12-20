@@ -96,7 +96,31 @@
         <button class="save-btn" bindtap="handleArrangeSave">保存</button>
       </view>
     </view>
-    <view wx:if="{{currentTab == 3}}">记录页面内容</view>
+    <view wx:if="{{currentTab == 3}}" class="record-page">
+      <view class="record-title">测试结果</view>
+      <view class="record-table">
+        <view class="table-header">
+          <view class="th">日期</view>
+          <view class="th">时间</view>
+          <view class="th">单元</view>
+          <view class="th">正确数</view>
+          <view class="th">错误数</view>
+          <view class="th">正确率</view>
+          <view class="th">详情</view>
+        </view>
+        <view class="table-body">
+          <view class="table-row" wx:for="{{recordList}}" wx:key="index">
+            <view class="td">{{formatDate(item.date)}}</view>
+            <view class="td">{{item.time}}</view>
+            <view class="td">{{item.unit}}</view>
+            <view class="td">{{item.correct}}</view>
+            <view class="td">{{item.wrong}}</view>
+            <view class="td">{{item.accuracy}}</view>
+            <view class="td">查看</view>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- 底部导航栏 -->
