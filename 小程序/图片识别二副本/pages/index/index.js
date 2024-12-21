@@ -169,7 +169,7 @@ Page({
 
   // 添加保存处理方法
   handleArrangeSave() {
-    // 这里添加保存逻辑
+    // ��里添加保存逻辑
     wx.showToast({
       title: '保存成功',
       icon: 'success',
@@ -190,5 +190,12 @@ Page({
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const day = date.getDate().toString().padStart(2, '0');
     return `${month}-${day}`;
+  },
+
+  // 处理识别文本变化
+  handleRecognizedTextChange(e) {
+    this.setData({
+      recognizedText: e.detail.value
+    })
   }
 }) 

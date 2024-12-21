@@ -46,7 +46,14 @@
 
       <!-- 识别结果显示区域 -->
       <view class="result-section">
-        <text class="result-text">{{recognizedText}}</text>
+        <textarea 
+          class="result-text" 
+          value="{{recognizedText}}" 
+          bindinput="handleRecognizedTextChange"
+          auto-height
+          maxlength="-1"
+          placeholder="识别结果将显示在这里..."
+        ></textarea>
       </view>
 
       <!-- 单词和释义输入区域 -->
