@@ -45,29 +45,32 @@
       </view>
 
       <!-- 识别结果显示区域 -->
-      <view class="recognition-result" >
-        <view class="result-content" selectable="true" >{{recognizedText}}</view>
+      <view class="recognition-result">
+        <view class="text-box">
+          <text user-select="true" class="result-content">{{recognizedText}}</text>
+        </view>
       </view>
 
       <!-- 单词和释义输入区域 -->
       <view class="input-section">
         <view class="input-group">
-          <button class="word-btn">单词</button>
-          <button class="translate-btn">释义</button>
+          <button class="word-btn" bindtap="handleInputWord">录入单词</button>
+          <button class="translate-btn {{!isWaitingMean ? 'disabled' : ''}}" 
+                  bindtap="{{isWaitingMean ? 'handleInputMean' : ''}}"
+                  disabled="{{!isWaitingMean}}">
+            录入释义
+          </button>
         </view>
       </view>
 
       <!-- 列表区域 -->
-      <view class="list-section">
-        <view class="list-item" wx:for="{{word_mean.slice(-3)}}" wx:key="id">
+      <view class="list-section" style="margin: 20rpx;">
+        <view class="list-item" wx:for="{{word_mean}}" wx:key="id">
           <view class="item-content">
-            <text selectable="true" class="word-text">{{item.word || '等待输入...'}}</text>
-            <text selectable="true" class="translation-text">{{item.mean || '等待输入...'}}</text>
+            <text selectable="true" class="word-text">{{item.word}}</text>
+            <text selectable="true" class="translation-text">{{item.mean}}</text>
           </view>
-          <view class="item-buttons">
-            <button class="edit-btn" bindtap="editWord" data-index="{{index}}">修改</button>
-            <button class="delete-btn" bindtap="deleteWord" data-index="{{index}}">删除</button>
-          </view>
+          <view class="delete-btn" bindtap="handleDelete" data-id="{{item.id}}">×</view>
         </view>
       </view>
     </view>
@@ -122,7 +125,7 @@
     </view>
   </view>
 
-  <!-- 底��导航栏 -->
+  <!-- 底部导航栏 -->
   <view class="tab-bar">
     <view class="tab-item {{currentTab==0 ? 'active' : ''}}" bindtap="switchTab" data-index="0">
       测试

@@ -6,16 +6,26 @@ Page({
     tempImage: '',
     recognizedText: '',
     copy_string: '',
-    word_mean: [
-      {
-        id: '1',
-        word: 'example',
-        mean: '例子',
-        rightTime: 0,
-        wrongTime: 0,
-        unit: 'L1'
-      }
-    ],
+    isWaitingMean: false,
+    word_mean: [],
+  },
+
+  // 在页面加载时读取本地存储的数据
+  onLoad() {
+    this.loadWordMeanFromStorage();
+  },
+
+  // 从本地存储加载数据
+  loadWordMeanFromStorage() {
+    const wordMean = wx.getStorageSync('word_mean') || [];
+    this.setData({
+      word_mean: wordMean
+    });
+  },
+
+  // 保存数据到本地存储
+  saveWordMeanToStorage() {
+    wx.setStorageSync('word_mean', this.data.word_mean);
   },
 
   // 切换标签页
@@ -181,43 +191,121 @@ Page({
 
   // 处理文本选中事件
   handleTextSelect(e) {
+    const selectedText = e.detail.value;
     this.setData({
-      copy_string: e.detail.value
+      copy_string: selectedText
     });
-  },
 
-  // 处理单词按钮点击
-  handleWordBtn() {
-    const wordMean = this.data.word_mean;
-    const lastItem = wordMean[wordMean.length - 1];
-    
-    if (!lastItem || (!lastItem.word && !lastItem.mean)) {
-      // 如果没有数据或最后一条数据word和mean都为空，直接添加新数据
-      this.addNewWord();
-    } else if (!lastItem.word && lastItem.mean) {
-      // 如果word为空但mean不为空，填充word
-      const updatedWordMean = [...wordMean];
-      updatedWordMean[wordMean.length - 1].word = this.data.copy_string;
-      this.setData({
-        word_mean: updatedWordMean
-      });
-    } else if (lastItem.word && !lastItem.mean) {
-      // 如果word不为空但mean为空，提示输入释义
-      wx.showToast({
-        title: '请输入释义',
-        icon: 'none'
-      });
+    // 根据当前状态显示不同的菜单选项
+    if (this.data.isWaitingMean) {
+      this.showActionSheet(['录入单词', '添加释义']);
     } else {
-      // 如果都不为空，添加新数据
-      this.addNewWord();
+      this.showActionSheet(['录入单词']);
     }
   },
 
+  // 显示操作菜单
+  showActionSheet(itemList) {
+    wx.showActionSheet({
+      itemList: itemList,
+      success: (res) => {
+        this.handleActionSheetClick(itemList[res.tapIndex]);
+      }
+    });
+  },
+
+  // 处理菜单点击事件
+  handleActionSheetClick(type) {
+    if (type === '录入单词') {
+      this.handleInputWord();
+    } else if (type === '添加释义') {
+      this.handleInputMean();
+    }
+  },
+
+  // 处理录入单词
+  handleInputWord() {
+    wx.getClipboardData({
+      success: (res) => {
+        const clipboardText = res.data;
+        if (!clipboardText) {
+          wx.showToast({
+            title: '请先复制要录入的单词',
+            icon: 'none'
+          });
+          return;
+        }
+
+        const wordMean = this.data.word_mean;
+        const lastItem = wordMean[wordMean.length - 1];
+
+        if (!lastItem || (lastItem.word && lastItem.mean)) {
+          this.addNewWord(clipboardText);
+        } else {
+          const updatedWordMean = [...wordMean];
+          updatedWordMean[wordMean.length - 1].word = clipboardText;
+          this.setData({
+            word_mean: updatedWordMean
+          }, () => {
+            this.saveWordMeanToStorage(); // 保存到本地存储
+          });
+        }
+
+        this.setData({
+          isWaitingMean: true
+        });
+
+        wx.showToast({
+          title: '请复制并录入释义',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+    });
+  },
+
+  // 处理录入释义
+  handleInputMean() {
+    wx.getClipboardData({
+      success: (res) => {
+        const clipboardText = res.data;
+        if (!clipboardText) {
+          wx.showToast({
+            title: '请先复制要录入的释义',
+            icon: 'none'
+          });
+          return;
+        }
+
+        const wordMean = this.data.word_mean;
+        const lastItem = wordMean[wordMean.length - 1];
+
+        if (lastItem && lastItem.word) {
+          const updatedWordMean = [...wordMean];
+          updatedWordMean[wordMean.length - 1].mean = clipboardText;
+          
+          this.setData({
+            word_mean: updatedWordMean,
+            isWaitingMean: false
+          }, () => {
+            this.saveWordMeanToStorage(); // 保存到本地存储
+          });
+
+          wx.showToast({
+            title: '录入成功',
+            icon: 'success',
+            duration: 1500
+          });
+        }
+      }
+    });
+  },
+
   // 添加新的单词数据
-  addNewWord() {
+  addNewWord(word) {
     const newWord = {
-      id: Date.now().toString(), // 使用时间戳作为临时ID
-      word: this.data.copy_string,
+      id: Date.now().toString(),
+      word: word,
       mean: '',
       rightTime: 0,
       wrongTime: 0,
@@ -226,6 +314,8 @@ Page({
 
     this.setData({
       word_mean: [...this.data.word_mean, newWord]
+    }, () => {
+      this.saveWordMeanToStorage(); // 保存到本地存储
     });
   },
 
@@ -233,5 +323,31 @@ Page({
   getLastThreeWords() {
     const wordMean = this.data.word_mean;
     return wordMean.slice(-3);
+  },
+
+  // 处理删除
+  handleDelete(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.showModal({
+      title: '确认删除',
+      content: '确定要删除这条记录吗？',
+      success: (res) => {
+        if (res.confirm) {
+          const wordMean = this.data.word_mean;
+          const updatedWordMean = wordMean.filter(item => item.id !== id);
+          
+          this.setData({
+            word_mean: updatedWordMean
+          }, () => {
+            this.saveWordMeanToStorage(); // 保存到本地存储
+          });
+
+          wx.showToast({
+            title: '删除成功',
+            icon: 'success'
+          });
+        }
+      }
+    });
   }
 }) 
