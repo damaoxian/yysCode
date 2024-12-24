@@ -7,28 +7,47 @@
         <text class="unit-label">选择单元：</text>
         <picker bindchange="handleUnitChange" value="{{currentUnit}}" range="{{unitList}}">
           <view class="unit-picker">
-            {{unitList[currentUnit] || 'L1'}}
+            {{unitList[currentUnit]}}
             <text class="picker-arrow">▼</text>
           </view>
         </picker>
       </view>
 
-      <!-- 释义区域 -->
-      <view class="test-translation-section">
-        <text class="translation-label">释义：</text>
-        <view class="translation-content">very difficult to do or deal with</view>
+      <!-- 测试进度 -->
+      <view wx:if="{{isTesting}}" class="test-progress">
+        <text>进度：{{testResults.current}}/{{testResults.total}}</text>
+        <text>正确：{{testResults.correct}} 错误：{{testResults.wrong}}</text>
       </view>
 
-      <!-- 输入区域 -->
-      <view class="test-input-section">
-        <input class="test-input" placeholder="请输入" />
-        <button class="confirm-btn">确定</button>
+      <!-- 测试区域 -->
+      <view wx:if="{{isTesting}}" class="test-content">
+        <!-- 释义区域 -->
+        <view class="test-translation-section">
+          <text class="translation-label">释义：</text>
+          <view class="translation-content">{{testWords[currentWordIndex].mean}}</view>
+        </view>
+
+        <!-- 输入区域 -->
+        <view class="test-input-section">
+          <input class="test-input" 
+                 value="{{inputWord}}"
+                 bindinput="handleTestInput"
+                 placeholder="请输入单词"
+                 focus="{{true}}"
+                 confirm-type="done"
+                 bindconfirm="checkAnswer"/>
+          <button class="confirm-btn" bindtap="checkAnswer">确定</button>
+        </view>
       </view>
 
       <!-- 底部按钮区域 -->
       <view class="test-footer">
-        <button class="test-btn start-btn">开始</button>
-        <button class="test-btn end-btn">结束</button>
+        <button class="test-btn start-btn" 
+                bindtap="startTest"
+                wx:if="{{!isTesting}}">开始测试</button>
+        <button class="test-btn end-btn" 
+                bindtap="endTest"
+                wx:if="{{isTesting}}">结束测试</button>
       </view>
     </view>
     <view wx:if="{{currentTab == 1}}" class="input-page">
@@ -76,49 +95,48 @@
     </view>
     <view wx:if="{{currentTab == 2}}" class="arrange-page">
       <view class="arrange-list">
-        <!-- 列表内容 -->
-        <view class="arrange-item" wx:for="{{wordList}}" wx:key="index">
-          <view class="arrange-word">
-            <input value="{{item.word}}" data-index="{{index}}" data-type="word" bindinput="handleArrangeInput"/>
-          </view>
-          <view class="arrange-translation">
-            <input value="{{item.translation}}" data-index="{{index}}" data-type="translation" bindinput="handleArrangeInput"/>
-          </view>
-          <!-- 添加删除按钮 -->
-          <view class="arrange-delete" bindtap="handleArrangeDelete" data-index="{{index}}">
+        <view class="arrange-item" wx:for="{{word_mean}}" wx:key="id">
+          <!-- 单词 -->
+          <view class="arrange-word">{{item.word}}</view>
+          
+          <!-- 释义 -->
+          <view class="arrange-translation">{{item.mean}}</view>
+          
+          <!-- 单元选择 -->
+          <picker class="arrange-unit" bindchange="handleUnitChange" data-index="{{index}}" value="{{item.unit}}" range="{{unitList}}">
+            <view class="unit-text">
+              {{unitList[item.unit] || '选择单元'}}
+            </view>
+          </picker>
+          
+          <!-- 删除按钮 -->
+          <view class="arrange-delete" bindtap="handleArrangeDelete" data-id="{{item.id}}">
             <text class="delete-icon">×</text>
-          </view>
-          <view class="arrange-input">
-            <input placeholder="请输入" data-index="{{index}}" data-type="input" bindinput="handleArrangeInput"/>
           </view>
         </view>
       </view>
-      <!-- 添加底部保存按钮 -->
-      <view class="arrange-footer">
-        <button class="save-btn" bindtap="handleArrangeSave">保存</button>
-      </view>
     </view>
     <view wx:if="{{currentTab == 3}}" class="record-page">
-      <view class="record-title">测试结果</view>
+      <view class="record-title">测试记录</view>
       <view class="record-table">
         <view class="table-header">
           <view class="th">日期</view>
           <view class="th">时间</view>
           <view class="th">单元</view>
-          <view class="th">正确数</view>
-          <view class="th">错误数</view>
+          <view class="th">总数</view>
+          <view class="th">正确</view>
+          <view class="th">错误</view>
           <view class="th">正确率</view>
-          <view class="th">详情</view>
         </view>
         <view class="table-body">
-          <view class="table-row" wx:for="{{recordList}}" wx:key="index">
+          <view class="table-row" wx:for="{{testRecords}}" wx:key="id">
             <view class="td">{{formatDate(item.date)}}</view>
             <view class="td">{{item.time}}</view>
             <view class="td">{{item.unit}}</view>
+            <view class="td">{{item.total}}</view>
             <view class="td">{{item.correct}}</view>
             <view class="td">{{item.wrong}}</view>
             <view class="td">{{item.accuracy}}</view>
-            <view class="td">查看</view>
           </view>
         </view>
       </view>

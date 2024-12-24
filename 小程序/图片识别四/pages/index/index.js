@@ -8,11 +8,27 @@ Page({
     copy_string: '',
     isWaitingMean: false,
     word_mean: [],
+    unitList: ['L1', 'L2', 'L3', 'L4', 'L5'],
+    currentUnit: 0,          // 当前选择的单元
+    testWords: [],          // 当前测试的单词列表
+    currentWordIndex: -1,   // 当前测试的单词索引
+    inputWord: '',          // 用户输入的单词
+    isTesting: false,       // 是否在测试中
+    testResults: {          // 测试结果
+      total: 0,
+      current: 0,
+      correct: 0,
+      wrong: 0
+    },
+    testRecords: []         // 测试记录
   },
 
   // 在页面加载时读取本地存储的数据
   onLoad() {
     this.loadWordMeanFromStorage();
+    const testRecords = wx.getStorageSync('testRecords') || [];
+    this.setData({ testRecords });
+    console.log('页面加载时 word_mean:', this.data.word_mean);
   },
 
   // 从本地存储加载数据
@@ -30,10 +46,30 @@ Page({
 
   // 切换标签页
   switchTab(e) {
-    const index = parseInt(e.currentTarget.dataset.index)
-    this.setData({
-      currentTab: index
-    })
+    const newIndex = parseInt(e.currentTarget.dataset.index);
+    
+    // 如果正在测试中且要切换到其他标签页
+    if (this.data.isTesting && this.data.currentTab === 0 && newIndex !== 0) {
+      wx.showModal({
+        title: '正在测试中',
+        content: '切换页面将结束当前测试，是否继续？',
+        success: (res) => {
+          if (res.confirm) {
+            // 用户确认切换，结束测试
+            this.finishTest();
+            this.setData({
+              currentTab: newIndex
+            });
+          }
+          // 用户取消则停留在当前页面，不做任何操作
+        }
+      });
+    } else {
+      // 不在测试中或在其他标签页，直接切换
+      this.setData({
+        currentTab: newIndex
+      });
+    }
   },
 
   // 选择图片
@@ -97,7 +133,7 @@ Page({
       fail: (err) => {
         wx.hideLoading()
         wx.showToast({
-          title: '图片处理失败',
+          title: '��片处理失败',
           icon: 'none'
         })
         console.error('读取图片失败:', err)
@@ -144,16 +180,28 @@ Page({
 
   // 添加删除处理方法
   handleArrangeDelete(e) {
-    const index = e.currentTarget.dataset.index;
-    const wordList = this.data.wordList;
-    const arrangeInputs = this.data.arrangeInputs;
+    const id = e.currentTarget.dataset.id;
     
-    wordList.splice(index, 1);
-    arrangeInputs.splice(index, 1);
-    
-    this.setData({
-      wordList,
-      arrangeInputs
+    wx.showModal({
+      title: '确认删除',
+      content: '确定要删除这个单词吗？',
+      success: (res) => {
+        if (res.confirm) {
+          const wordMean = this.data.word_mean.filter(item => item.id !== id);
+          
+          this.setData({
+            word_mean: wordMean
+          });
+          
+          // 保存到本地存储
+          this.saveWordMeanToStorage();
+          
+          wx.showToast({
+            title: '删除成功',
+            icon: 'success'
+          });
+        }
+      }
     });
   },
 
@@ -169,9 +217,10 @@ Page({
 
   // 处理单元选择
   handleUnitChange(e) {
+    const unitIndex = parseInt(e.detail.value);
     this.setData({
-      currentUnit: e.detail.value
-    })
+      currentUnit: unitIndex
+    });
   },
 
   // 格式化日期方法
@@ -346,6 +395,170 @@ Page({
             title: '删除成功',
             icon: 'success'
           });
+        }
+      }
+    });
+  },
+
+  // 开始测试
+  startTest() {
+    // 获取当前单元的单词
+    const unitWords = this.data.word_mean.filter(
+      item => item.unit === this.data.unitList[this.data.currentUnit]
+    );
+    console.log('开始测试时筛选的单词:', unitWords);
+
+    if (unitWords.length === 0) {
+      wx.showToast({
+        title: '该单元没有单词',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 随机打乱单词顺序
+    const shuffledWords = [...unitWords].sort(() => Math.random() - 0.5);
+    console.log('打乱顺序后的单词:', shuffledWords);
+
+    this.setData({
+      testWords: shuffledWords,
+      currentWordIndex: 0,
+      isTesting: true,
+      inputWord: '',
+      testResults: {
+        total: shuffledWords.length,
+        current: 0,
+        correct: 0,
+        wrong: 0
+      }
+    });
+  },
+
+  // 处理用户输入
+  handleTestInput(e) {
+    this.setData({
+      inputWord: e.detail.value
+    });
+  },
+
+  // 检查答案
+  checkAnswer() {
+    const { testWords, currentWordIndex, inputWord, testResults } = this.data;
+    const currentWord = testWords[currentWordIndex];
+    console.log('当前测试的单词:', currentWord);
+    
+    // 检查答案是否正确（不区分大小写）
+    const isCorrect = inputWord.toLowerCase() === currentWord.word.toLowerCase();
+    
+    // 更新统计数据
+    const wordMean = [...this.data.word_mean];
+    const wordIndex = wordMean.findIndex(item => item.id === currentWord.id);
+    
+    if (isCorrect) {
+      wordMean[wordIndex].rightTime = (wordMean[wordIndex].rightTime || 0) + 1;
+      testResults.correct++;
+      console.log('答对后更新的单词:', wordMean[wordIndex]);
+      // 显示正确提示
+      wx.showToast({
+        title: '正确!',
+        icon: 'success',
+        duration: 1000
+      });
+    } else {
+      wordMean[wordIndex].wrongTime = (wordMean[wordIndex].wrongTime || 0) + 1;
+      testResults.wrong++;
+      console.log('答错后更新的单词:', wordMean[wordIndex]);
+      // 显示错误提示和正确答案
+      wx.showModal({
+        title: '错误',
+        content: `正确答案是: ${currentWord.word}`,
+        showCancel: false,
+        success: () => {
+          // 模态框关闭后继续下一题
+          this.continueToNextWord();
+        }
+      });
+    }
+    
+    testResults.current++;
+
+    // 更新数据
+    this.setData({
+      word_mean: wordMean,
+      testResults,
+      inputWord: ''
+    }, () => {
+      this.saveWordMeanToStorage();
+      
+      // 只有在答案正确时才立即继续下一题
+      // 错误时等待用户查看正确答案后再继续
+      if (isCorrect) {
+        this.continueToNextWord();
+      }
+    });
+  },
+
+  // 继续下一个单词的方法
+  continueToNextWord() {
+    const { testResults } = this.data;
+    // 检查是否完成测试
+    if (testResults.current >= testResults.total) {
+      this.finishTest();
+    } else {
+      // 继续下一个单词
+      setTimeout(() => {
+        this.setData({
+          currentWordIndex: this.data.currentWordIndex + 1
+        });
+      }, 500);
+    }
+  },
+
+  // 完成测试
+  finishTest() {
+    const { testResults, unitList, currentUnit } = this.data;
+    console.log('测试完成时的 word_mean:', this.data.word_mean);
+    const accuracy = ((testResults.correct / testResults.total) * 100).toFixed(1);
+    
+    // 创建测试记录
+    const record = {
+      id: Date.now(),
+      date: new Date(),
+      time: new Date().toLocaleTimeString(),
+      unit: unitList[currentUnit],
+      total: testResults.total,
+      correct: testResults.correct,
+      wrong: testResults.wrong,
+      accuracy: accuracy + '%'
+    };
+
+    // 更新测试记录
+    const testRecords = [record, ...this.data.testRecords];
+    
+    this.setData({
+      testRecords,
+      isTesting: false
+    });
+
+    // 保存测试记录到本地存储
+    wx.setStorageSync('testRecords', testRecords);
+
+    // 显示测试结果
+    wx.showModal({
+      title: '测试完成',
+      content: `总题数: ${testResults.total}\n正确: ${testResults.correct}\n错误: ${testResults.wrong}\n正确率: ${accuracy}%`,
+      showCancel: false
+    });
+  },
+
+  // 结束测试
+  endTest() {
+    wx.showModal({
+      title: '确认结束',
+      content: '确定要结束本次测试吗？',
+      success: (res) => {
+        if (res.confirm) {
+          this.finishTest();
         }
       }
     });
