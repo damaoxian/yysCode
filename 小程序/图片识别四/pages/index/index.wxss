@@ -128,38 +128,31 @@
 .list-section {
   background: #fff;
   border-radius: 8rpx;
-  box-shadow: 0 2rpx 4rpx rgba(0,0,0,0.1);
-  margin: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+  overflow: hidden;
 }
 
 .list-item {
   padding: 20rpx;
   border-bottom: 1px solid #eee;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
 
 .list-item:last-child {
   border-bottom: none;
 }
 
-.item-content {
-  display: flex;
-  flex-direction: column;
-  gap: 10rpx;
-}
-
 .word-text {
-  font-size: 30rpx;
-  color: #333;
-  line-height: 1.4;
+  display: block;
+  font-size: 32rpx;
+  font-weight: bold;
+  margin-bottom: 8rpx;
 }
 
 .translation-text {
+  display: block;
   font-size: 28rpx;
   color: #666;
-  line-height: 1.4;
+  margin-bottom: 8rpx;
 }
 
 .item-checkbox {
@@ -261,12 +254,18 @@
 .save-btn {
   background-color: #07c160;
   color: #fff;
-  font-size: 32rpx;
+}
+
+.cancel-btn {
+  background-color: #999;
+  color: #fff;
+}
+
+.save-btn, .cancel-btn {
+  font-size: 28rpx;
+  padding: 16rpx 40rpx;
   border-radius: 8rpx;
-  width: 90%;
-  height: 80rpx;
-  line-height: 80rpx;
-  margin: 0 auto;
+  margin-left: 20rpx;
 }
 
 .save-btn:active {
@@ -522,4 +521,333 @@
 .td {
   font-size: 24rpx;
   padding: 16rpx 8rpx;
+}
+
+/* 添加键盘相关样式 */
+/* 键盘容器的基础样式 */
+.keyboard {
+  position: fixed;      /* 固定定位,不随页面滚动 */
+  bottom: -100%;        /* 初始位置在屏幕底部以下,实现隐藏效果 */
+  left: 0;             /* 左对齐 */
+  width: 100%;         /* 宽度占满屏幕 */
+  background: #d1d5db; /* 设置键盘背景色为浅灰色 */
+  transition: bottom 0.3s;  /* 添加底部位置的过渡动画,持续0.3秒 */
+  z-index: 1000;       /* 确保键盘显示在其他元素上方 */
+  padding: 10rpx;      /* 设置内边距 */
+}
+
+/* 键盘显示时的样式 */
+.keyboard-show {
+  bottom: 0;           /* 显示时移动到屏幕底部 */
+}
+
+/* 键盘顶部区域样式 */
+.keyboard-header {
+  display: flex;                /* 使用弹性布局 */
+  align-items: center;          /* 垂直居中对齐 */
+  padding: 20rpx;              /* 内边距20rpx */
+  background: #fff;            /* 背景色白色 */
+  border-radius: 8rpx;         /* 圆角8rpx */
+  margin-bottom: 10rpx;        /* 底部外边距10rpx */
+}
+
+/* 键盘输入框样式 */
+.keyboard-input {
+  flex: 1;                     /* 占据剩余空间 */
+  height: 60rpx;              /* 高度60rpx */
+  line-height: 60rpx;         /* 行高60rpx */
+  padding: 0 20rpx;           /* 左右内边距20rpx */
+  font-size: 32rpx;           /* 字体大小32rpx */
+}
+
+/* 键盘按键区域样式 */
+.keyboard-keys {
+  padding: 10rpx;             /* 内边距10rpx */
+}
+
+/* 按键行样式 */
+.key-row {
+  display: flex;
+  justify-content: space-between;  /* 使按键均匀分布 */
+  margin-bottom: 10rpx;           /* 行间距 */
+  width: 100%;
+}
+
+/* 单个按键样式 */
+.key {
+  flex: 1;                        /* 让每个按键平均分配空间 */
+  height: 80rpx;                  /* 固定高度 */
+  margin: 0 5rpx;                /* 按键之间的间距 */
+  background: #ffffff;
+  border-radius: 8rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32rpx;
+}
+
+/* 最后一行的特殊按钮 */
+.space-key {
+  flex: 2;                        /* 空格键占用更多空间 */
+}
+
+.confirm-key {
+  flex: 1;                      /* 确定键稍大一些 */
+  background: #07c160;            /* 微信绿色 */
+  color: #fff;
+}
+
+/* 按键按下状态样式 */
+.key:active {
+  background: #e8e8e8;       /* 按下时背景色变为浅灰色 */
+}
+
+/* Shift键样式 */
+.shift-key {
+  width: 80rpx;              /* 宽度80rpx */
+}
+
+/* Shift键激活状态样式 */
+.shift-key .active {
+  color: #07c160;            /* 激活时文字颜色为绿色 */
+}
+
+/* 删除键样式 */
+.delete-key {
+  width: 80rpx;              /* 宽度80rpx */
+}
+
+/* 空格键样式 */
+.space-key {
+  width: 400rpx;             /* 宽度400rpx */
+  font-size: 28rpx;          /* 字体大小28rpx */
+}
+
+/* 确认键样式 */
+.confirm-key {
+  width: 120rpx;             /* 宽度120rpx */
+  background: #07c160;       /* 背景色绿色 */
+  color: #fff;               /* 文字颜色白色 */
+}
+
+/* 删除按钮样式 */
+.keyboard-delete {
+  width: 80rpx;              /* 宽度80rpx */
+  height: 60rpx;             /* 高度60rpx */
+  line-height: 60rpx;        /* 行高60rpx */
+  text-align: center;        /* 文字居中 */
+  font-size: 40rpx;          /* 字体大小40rpx */
+  color: #666;               /* 文字颜色深灰色 */
+}
+
+/* 遮罩层样式 */
+.mask {
+  position: fixed;           /* 固定定位 */
+  top: 0;                   /* 顶部对齐 */
+  left: 0;                  /* 左侧对齐 */
+  right: 0;                 /* 右侧对齐 */
+  bottom: 0;                /* 底部对齐 */
+  background: rgba(0, 0, 0, 0.5);  /* 半透明黑色背景 */
+  z-index: 999;             /* 层级999 */
+}
+
+/* 测试输入框样式 */
+.test-input {
+  flex: 1;                  /* 占据剩余空间 */
+  height: 80rpx;            /* 高度80rpx */
+  line-height: 80rpx;       /* 行高80rpx */
+  background: #fff;         /* 背景色白色 */
+  border: 1px solid #ddd;   /* 1px实线边框 */
+  border-radius: 8rpx;      /* 圆角8rpx */
+  padding: 0 20rpx;         /* 左右内边距20rpx */
+  font-size: 32rpx;         /* 字体大小32rpx */
+  color: #333;              /* 文字颜色深灰色 */
+}
+
+/* 项目操作区域样式 */
+.item-actions {
+  display: flex;            /* 使用弹性布局 */
+  gap: 20rpx;              /* 元素间距20rpx */
+  margin-top: 10rpx;       /* 顶部外边距10rpx */
+}
+
+/* 编辑和删除按钮共同样式 */
+.edit-btn, .delete-btn {
+  font-size: 24rpx;        /* 字体大小24rpx */
+  padding: 4rpx 16rpx;     /* 内边距:上下4rpx,左右16rpx */
+  border-radius: 4rpx;     /* 圆角4rpx */
+  color: #fff;             /* 文字颜色白色 */
+}
+
+/* 编辑按钮样式 */
+.edit-btn {
+  background-color: #1890ff;  /* 背景色蓝色 */
+}
+
+/* 删除按钮样式 */
+.delete-btn {
+  background-color: #ff4d4f;  /* 背景色红色 */
+}
+
+/* 编辑表单样式 */
+.edit-form {
+  position: fixed;           /* 固定定位 */
+  top: 50%;                 /* 顶部50% */
+  left: 50%;                /* 左侧50% */
+  transform: translate(-50%, -50%);  /* 居中定位 */
+  width: 90%;               /* 宽度90% */
+  background: #fff;         /* 背景色白色 */
+  padding: 30rpx;           /* 内边距30rpx */
+  border-radius: 16rpx;     /* 圆角16rpx */
+  box-shadow: 0 4rpx 16rpx rgba(0,0,0,0.15);  /* 阴影效果 */
+  z-index: 1000;            /* 层级1000 */
+}
+
+/* 编辑输入框样式 */
+.edit-input {
+  width: 100%;              /* 宽度100% */
+  background: #f5f5f5;      /* 背景色浅灰色 */
+  border-radius: 8rpx;      /* 圆角8rpx */
+  padding: 20rpx;           /* 内边距20rpx */
+  margin-bottom: 30rpx;     /* 底部外边距30rpx */
+  font-size: 32rpx;         /* 字体大小32rpx */
+  line-height: 1.6;         /* 行高1.6 */
+}
+
+/* 编辑操作区域样式 */
+.edit-actions {
+  display: flex;            /* 使用弹性布局 */
+  justify-content: flex-end;  /* 右对齐 */
+  gap: 20rpx;               /* 元素间距20rpx */
+  margin-top: 20rpx;        /* 顶部外边距20rpx */
+}
+
+/* 保存和取消按钮共同样式 */
+.save-btn, .cancel-btn {
+  font-size: 28rpx;         /* 字体大小28rpx */
+  padding: 16rpx 40rpx;     /* 内边距:上下16rpx,左右40rpx */
+  border-radius: 8rpx;      /* 圆角8rpx */
+  color: #fff;              /* 文字颜色白色 */
+}
+
+/* 添加编辑状态的遮罩层 */
+.edit-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* 单词编辑框 */
+.edit-input.word-input {
+  min-height: 100rpx;
+}
+
+/* 释义编辑框 */
+.edit-input.mean-input {
+  min-height: 400rpx;
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+/* 键盘容器 */
+.keyboard-container {
+  width: 100%;
+  padding: 10rpx;
+  background: #f5f5f5;
+}
+
+/* 添加单元选择器样式 */
+.unit-selector {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+  background: #fff;
+  padding: 20rpx;
+  border-radius: 8rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.1);
+}
+
+.unit-label {
+  font-size: 28rpx;
+  color: #333;
+  margin-right: 20rpx;
+}
+
+.unit-picker {
+  flex: 1;
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 20rpx;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+  font-size: 28rpx;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.picker-arrow {
+  color: #999;
+  font-size: 24rpx;
+}
+
+/* 修改单元选择器样式 */
+.unit-picker-wrapper {
+  flex: 1;
+}
+
+.unit-picker {
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 20rpx;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+  font-size: 28rpx;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 测试页面的单元选择器样式 */
+.test-picker-wrapper {
+  flex: 1;
+}
+
+.test-unit-picker {
+  height: 70rpx;
+  line-height: 70rpx;
+  padding: 0 20rpx;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 录入页面的单元选择器样式 */
+.unit-picker-wrapper {
+  flex: 1;
+}
+
+.unit-picker {
+  height: 60rpx;
+  line-height: 60rpx;
+  padding: 0 20rpx;
+  background: #f5f5f5;
+  border-radius: 6rpx;
+  font-size: 28rpx;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }

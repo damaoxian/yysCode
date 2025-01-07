@@ -8,7 +8,7 @@ Page({
     copy_string: '',
     isWaitingMean: false,
     word_mean: [],
-    unitList: ['L1', 'L2', 'L3', 'L4', 'L5'],
+    unitList: ['U1L1', 'U1L2', 'U1L3','U2L1', 'U2L2', 'U2L3','U3L1', 'U3L2', 'U3L3','U4L1', 'U4L2', 'U4L3','U5L1', 'U5L2', 'U5L3','U6L1', 'U6L2', 'U6L3','U7L1', 'U7L2', 'U7L3','U8L1', 'U8L2', 'U8L3','U9L1', 'U9L2', 'U9L3'],
     currentUnit: 0,          // 当前选择的单元
     testWords: [],          // 当前测试的单词列表
     currentWordIndex: -1,   // 当前测试的单词索引
@@ -20,7 +20,17 @@ Page({
       correct: 0,
       wrong: 0
     },
-    testRecords: []         // 测试记录
+    testRecords: [],         // 测试记录
+    letters: [
+      ['q','w','e','r','t','y','u','i','o','p'],
+      ['a','s','d','f','g','h','j','k','l'],
+      ['z','x','c','v','b','n','m']
+    ],
+    isUpperCase: false,  // 是否大写
+    showKeyboard: false,
+    editingId: null,  // 当前正在编辑的单词 ID
+    editWord: '',     // 编辑中的单词
+    editMean: ''      // 编辑中的释义
   },
 
   // 在页面加载时读取本地存储的数据
@@ -37,6 +47,7 @@ Page({
     this.setData({
       word_mean: wordMean
     });
+    console.log('从本地存储加载的 word_mean:', this.data.word_mean);
   },
 
   // 保存数据到本地存储
@@ -133,7 +144,7 @@ Page({
       fail: (err) => {
         wx.hideLoading()
         wx.showToast({
-          title: '��片处理失败',
+          title: '片处理失败',
           icon: 'none'
         })
         console.error('读取图片失败:', err)
@@ -215,11 +226,21 @@ Page({
     });
   },
 
-  // 处理单元选择
+  // 修改测试页面的单元选择处理方法
   handleUnitChange(e) {
     const unitIndex = parseInt(e.detail.value);
     this.setData({
       currentUnit: unitIndex
+    });
+  },
+
+  // 录入页面的单元选择处理方法
+  handleInputUnitChange(e) {
+    const unitIndex = parseInt(e.detail.value);
+    this.setData({
+      currentUnit: unitIndex
+    }, () => {
+      console.log('当前选择的单元:', this.data.unitList[unitIndex]);
     });
   },
 
@@ -358,13 +379,13 @@ Page({
       mean: '',
       rightTime: 0,
       wrongTime: 0,
-      unit: 'L1'
+      unit: this.data.unitList[this.data.currentUnit] // 使用当前选择的单元
     };
 
     this.setData({
       word_mean: [...this.data.word_mean, newWord]
     }, () => {
-      this.saveWordMeanToStorage(); // 保存到本地存储
+      this.saveWordMeanToStorage();
     });
   },
 
@@ -437,7 +458,7 @@ Page({
   // 处理用户输入
   handleTestInput(e) {
     this.setData({
-      inputWord: e.detail.value
+      inputWord: e.detail.value.toUpperCase() // 转换为大写
     });
   },
 
@@ -561,6 +582,138 @@ Page({
           this.finishTest();
         }
       }
+    });
+  },
+
+  // 添加处理整理页面单元选择的方法
+  handleArrangeUnitChange(e) {
+    const index = e.currentTarget.dataset.index;
+    const unitIndex = parseInt(e.detail.value);
+    
+    const wordMean = [...this.data.word_mean];
+    wordMean[index].unit = this.data.unitList[unitIndex];
+    
+    this.setData({
+      word_mean: wordMean
+    }, () => {
+      this.saveWordMeanToStorage();
+      console.log('修改单元后的 word_mean:', this.data.word_mean);
+    });
+  },
+
+  // 添加键盘相关方法
+  showKeyboard() {
+    this.setData({
+      showKeyboard: true
+    });
+  },
+
+  hideKeyboard() {
+    this.setData({
+      showKeyboard: false
+    });
+  },
+
+  handleKeyTap(e) {
+    const letter = e.currentTarget.dataset.letter;
+    const currentInput = this.data.inputWord;
+    this.setData({
+      inputWord: currentInput + (this.data.isUpperCase ? letter.toUpperCase() : letter)
+    });
+  },
+
+  handleDelete() {
+    const inputWord = this.data.inputWord;
+    if (inputWord.length > 0) {
+      this.setData({
+        inputWord: inputWord.slice(0, -1)
+      });
+    }
+  },
+
+  handleKeyboardConfirm() {
+    this.hideKeyboard();
+    this.checkAnswer();
+  },
+
+  // 添加大小写切换方法
+  toggleCase() {
+    this.setData({
+      isUpperCase: !this.data.isUpperCase
+    });
+  },
+
+  // 添加空格输入方法
+  handleSpace() {
+    const currentInput = this.data.inputWord;
+    this.setData({
+      inputWord: currentInput + ' '
+    });
+  },
+
+  // 添加编辑相关方法
+  handleEdit(e) {
+    const id = e.currentTarget.dataset.id;
+    const word = this.data.word_mean.find(item => item.id === id);
+    if (word) {
+      this.setData({
+        editingId: id,
+        editWord: word.word,
+        editMean: word.mean
+      });
+    }
+  },
+
+  // 处理编辑输入
+  handleEditInput(e) {
+    const { field } = e.currentTarget.dataset;
+    this.setData({
+      [field]: e.detail.value
+    });
+  },
+
+  // 保存编辑
+  handleEditSave() {
+    const { editingId, editWord, editMean, word_mean } = this.data;
+    if (!editWord.trim() || !editMean.trim()) {
+      wx.showToast({
+        title: '单词和释义不能为空',
+        icon: 'none'
+      });
+      return;
+    }
+
+    const updatedWordMean = word_mean.map(item => {
+      if (item.id === editingId) {
+        return {
+          ...item,
+          word: editWord.trim(),
+          mean: editMean.trim()
+        };
+      }
+      return item;
+    });
+
+    this.setData({
+      word_mean: updatedWordMean,
+      editingId: null,
+      editWord: '',
+      editMean: ''
+    }, () => {
+      this.saveWordMeanToStorage();
+      wx.showToast({
+        title: '修改成功',
+        icon: 'success'
+      });
+    });
+  },
+
+  // 取消编辑
+  handleEditCancel() {
+    this.setData({
+      editingId: null,
+      editWord: '',
+      editMean: ''
     });
   }
 }) 

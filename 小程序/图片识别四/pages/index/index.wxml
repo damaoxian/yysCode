@@ -5,8 +5,11 @@
       <!-- 选择单元区域 -->
       <view class="unit-section">
         <text class="unit-label">选择单元：</text>
-        <picker bindchange="handleUnitChange" value="{{currentUnit}}" range="{{unitList}}">
-          <view class="unit-picker">
+        <picker bindchange="handleUnitChange" 
+                value="{{currentUnit}}" 
+                range="{{unitList}}"
+                class="test-picker-wrapper">
+          <view class="test-unit-picker">
             {{unitList[currentUnit]}}
             <text class="picker-arrow">▼</text>
           </view>
@@ -29,13 +32,7 @@
 
         <!-- 输入区域 -->
         <view class="test-input-section">
-          <input class="test-input" 
-                 value="{{inputWord}}"
-                 bindinput="handleTestInput"
-                 placeholder="请输入单词"
-                 focus="{{true}}"
-                 confirm-type="done"
-                 bindconfirm="checkAnswer"/>
+          <view class="test-input" bindtap="showKeyboard">{{inputWord || '点击输入单词'}}</view>
           <button class="confirm-btn" bindtap="checkAnswer">确定</button>
         </view>
       </view>
@@ -72,6 +69,20 @@
 
       <!-- 单词和释义输入区域 -->
       <view class="input-section">
+        <!-- 添加单元选择下拉框 -->
+        <view class="unit-selector">
+          <text class="unit-label">选择单元：</text>
+          <picker bindchange="handleInputUnitChange" 
+                  value="{{currentUnit}}" 
+                  range="{{unitList}}"
+                  class="unit-picker-wrapper">
+            <view class="unit-picker">
+              {{unitList[currentUnit]}}
+              <text class="picker-arrow">▼</text>
+            </view>
+          </picker>
+        </view>
+        
         <view class="input-group">
           <button class="word-btn" bindtap="handleInputWord">录入单词</button>
           <button class="translate-btn {{!isWaitingMean ? 'disabled' : ''}}" 
@@ -84,12 +95,40 @@
 
       <!-- 列表区域 -->
       <view class="list-section" style="margin: 20rpx;">
-        <view class="list-item" wx:for="{{word_mean}}" wx:key="id">
+        <view class="list-item" 
+              wx:for="{{word_mean}}" 
+              wx:key="id"
+              wx:if="{{index >= word_mean.length - 3}}">
           <view class="item-content">
-            <text selectable="true" class="word-text">{{item.word}}</text>
-            <text selectable="true" class="translation-text">{{item.mean}}</text>
+            <!-- 非编辑状态 -->
+            <view wx:if="{{editingId !== item.id}}">
+              <text selectable="true" class="word-text">{{item.word}}</text>
+              <text selectable="true" class="translation-text">{{item.mean}}</text>
+              <view class="item-actions">
+                <view class="edit-btn" bindtap="handleEdit" data-id="{{item.id}}">编辑</view>
+                <view class="delete-btn" bindtap="handleDelete" data-id="{{item.id}}">删除</view>
+              </view>
+            </view>
+            
+            <!-- 编辑状态 -->
+            <view wx:if="{{editingId === item.id}}" class="edit-mask"></view>
+            <view wx:if="{{editingId === item.id}}" class="edit-form">
+              <input class="edit-input word-input" 
+                     value="{{editWord}}" 
+                     data-field="editWord"
+                     bindinput="handleEditInput"
+                     placeholder="请输入单词"/>
+              <textarea class="edit-input mean-input" 
+                     value="{{editMean}}" 
+                     data-field="editMean"
+                     bindinput="handleEditInput"
+                     placeholder="请输入释义"/>
+              <view class="edit-actions">
+                <view class="cancel-btn" bindtap="handleEditCancel">取消</view>
+                <view class="save-btn" bindtap="handleEditSave">保存</view>
+              </view>
+            </view>
           </view>
-          <view class="delete-btn" bindtap="handleDelete" data-id="{{item.id}}">×</view>
         </view>
       </view>
     </view>
@@ -103,9 +142,13 @@
           <view class="arrange-translation">{{item.mean}}</view>
           
           <!-- 单元选择 -->
-          <picker class="arrange-unit" bindchange="handleUnitChange" data-index="{{index}}" value="{{item.unit}}" range="{{unitList}}">
+          <picker class="arrange-unit" 
+                  bindchange="handleArrangeUnitChange" 
+                  data-index="{{index}}" 
+                  value="{{unitList.indexOf(item.unit)}}" 
+                  range="{{unitList}}">
             <view class="unit-text">
-              {{unitList[item.unit] || '选择单元'}}
+              {{item.unit || '选择单元'}}
             </view>
           </picker>
           
@@ -158,4 +201,45 @@
       记录
     </view>
   </view>
+
+  <!-- 在页面底部添加自定义键盘 -->
+  <view class="keyboard {{showKeyboard ? 'keyboard-show' : ''}}" wx:if="{{isTesting}}">
+    <view class="keyboard-header">
+      <view class="keyboard-input">{{inputWord}}</view>
+      <view class="keyboard-delete" bindtap="handleDelete">×</view>
+    </view>
+    <view class="keyboard-container">
+      <!-- 第一行 -->
+      <view class="key-row">
+        <view class="key" wx:for="{{letters[0]}}" wx:key="*this" bindtap="handleKeyTap" data-letter="{{item}}">
+          {{isUpperCase ? item.toUpperCase() : item}}
+        </view>
+      </view>
+      
+      <!-- 第二行 -->
+      <view class="key-row">
+        <view class="key" wx:for="{{letters[1]}}" wx:key="*this" bindtap="handleKeyTap" data-letter="{{item}}">
+          {{isUpperCase ? item.toUpperCase() : item}}
+        </view>
+      </view>
+      
+      <!-- 第三行 -->
+      <view class="key-row">
+        <view class="key shift-key" bindtap="toggleCase">⇧</view>
+        <view class="key" wx:for="{{letters[2]}}" wx:key="*this" bindtap="handleKeyTap" data-letter="{{item}}">
+          {{isUpperCase ? item.toUpperCase() : item}}
+        </view>
+        <view class="key" bindtap="handleDelete">←</view>
+      </view>
+      
+      <!-- 第四行 -->
+      <view class="key-row">
+        <view class="key space-key" bindtap="handleSpace">空格</view>
+        <view class="key confirm-key" bindtap="handleKeyboardConfirm">确定</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 添加遮罩层 -->
+  <view class="mask" wx:if="{{showKeyboard}}" bindtap="hideKeyboard"></view>
 </view> 

@@ -1,5 +1,0 @@
-<view class="container">
-  <view class="text-box" user-select="true">
-    <text selectable="true">{{displayText}}</text>
-  </view>
-</view> 
