@@ -30,7 +30,9 @@ Page({
     showKeyboard: false,
     editingId: null,  // 当前正在编辑的单词 ID
     editWord: '',     // 编辑中的单词
-    editMean: ''      // 编辑中的释义
+    editMean: '',      // 编辑中的释义
+    exportContent: '', // 导出的内容
+    showExportModal: false, // 控制导出弹窗显示
   },
 
   // 在页面加载时读取本地存储的数据
@@ -492,7 +494,7 @@ Page({
       // 显示错误提示和正确答案
       wx.showModal({
         title: '错误',
-        content: `正确答案是: ${currentWord.word}`,
+        content: `正确答案是: ${currentWord.word} \n 你的答案是: ${inputWord}`,
         showCancel: false,
         success: () => {
           // 模态框关闭后继续下一题
@@ -714,6 +716,187 @@ Page({
       editingId: null,
       editWord: '',
       editMean: ''
+    });
+  },
+
+  // 导出数据到文件
+  handleExport() {
+    const wordList = wx.getStorageSync('word_mean') || [];
+    // 将数据转换为固定格式
+    let exportData = '单词学习小程序数据文件\n';
+    exportData += '版本:1.0\n';
+    exportData += '导出时间:' + new Date().toLocaleString() + '\n';
+    exportData += '---BEGIN---\n';
+    wordList.forEach(item => {
+      exportData += `${item.word}|${item.mean}|${item.unit}|${item.rightTime || 0}|${item.wrongTime || 0}\n`;
+    });
+    exportData += '---END---\n';
+    
+    // 保存为文件
+    const fs = wx.getFileSystemManager();
+    const filePath = `${wx.env.USER_DATA_PATH}/wordlist_${Date.now()}.txt`;
+    
+    fs.writeFile({
+      filePath: filePath,
+      data: exportData,
+      encoding: 'utf8',
+      success: () => {
+        // 保存文件到本地
+        wx.saveFile({
+          tempFilePath: filePath,
+          success: (res) => {
+            wx.showModal({
+              title: '导出成功',
+              content: '文件已保存，可以分享给其他用户',
+              confirmText: '分享文件',
+              success: (res) => {
+                if (res.confirm) {
+                  wx.shareFileMessage({
+                    filePath: filePath,
+                    success: () => {
+                      console.log('分享成功');
+                    },
+                    fail: (err) => {
+                      console.error('分享失败:', err);
+                    }
+                  });
+                }
+              }
+            });
+          },
+          fail: (err) => {
+            console.error('保存文件失败:', err);
+            wx.showToast({
+              title: '导出失败',
+              icon: 'error'
+            });
+          }
+        });
+      },
+      fail: (err) => {
+        console.error('写入文件失败:', err);
+        wx.showToast({
+          title: '导出失败',
+          icon: 'error'
+        });
+      }
+    });
+  },
+
+  // 导入数据文件
+  handleImport() {
+    wx.chooseMessageFile({
+      count: 1,
+      type: 'file',
+      extension: ['txt'],
+      success: (res) => {
+        const tempFilePath = res.tempFiles[0].path;
+        const fs = wx.getFileSystemManager();
+        
+        fs.readFile({
+          filePath: tempFilePath,
+          encoding: 'utf8',
+          success: (res) => {
+            try {
+              const lines = res.data.split('\n');
+              // 验证文件格式
+              if (lines[0].trim() !== '单词学习小程序数据文件' || 
+                  !lines[1].startsWith('版本:') ||
+                  !lines[2].startsWith('导出时间:') ||
+                  lines[3].trim() !== '---BEGIN---') {
+                throw new Error('文件格式不正确');
+              }
+
+              const newWords = [];
+              let i = 4; // 跳过头部信息
+              while (i < lines.length && lines[i].trim() !== '---END---') {
+                const parts = lines[i].trim().split('|');
+                if (parts.length === 5) {
+                  newWords.push({
+                    id: Date.now() + i.toString(), // 生成新的ID
+                    word: parts[0],
+                    mean: parts[1],
+                    unit: parts[2],
+                    rightTime: parseInt(parts[3]),
+                    wrongTime: parseInt(parts[4])
+                  });
+                }
+                i++;
+              }
+
+              if (newWords.length > 0) {
+                wx.showModal({
+                  title: '确认导入',
+                  content: `发现 ${newWords.length} 个单词，是否导入？`,
+                  success: (res) => {
+                    if (res.confirm) {
+                      // 合并现有数据
+                      const existingWords = wx.getStorageSync('word_mean') || [];
+                      const mergedWords = [...existingWords, ...newWords];
+                      wx.setStorageSync('word_mean', mergedWords);
+                      
+                      // 刷新页面数据
+                      this.loadWordMeanFromStorage();
+                      
+                      wx.showToast({
+                        title: '导入成功',
+                        icon: 'success'
+                      });
+                    }
+                  }
+                });
+              }
+            } catch (error) {
+              wx.showToast({
+                title: '文件格式错误',
+                icon: 'error'
+              });
+            }
+          },
+          fail: (err) => {
+            console.error('读取文件失败:', err);
+            wx.showToast({
+              title: '导入失败',
+              icon: 'error'
+            });
+          }
+        });
+      }
+    });
+  },
+
+  // 在 methods 中添加删除全部的方法
+  handleDeleteAll() {
+    wx.showModal({
+      title: '警告',
+      content: '确定要删除所有单词吗？此操作不可恢复！',
+      confirmText: '删除',
+      confirmColor: '#ff4d4f',
+      success: (res) => {
+        if (res.confirm) {
+          // 二次确认
+          wx.showModal({
+            title: '最后确认',
+            content: '真的要删除所有单词吗？',
+            confirmText: '确定删除',
+            confirmColor: '#ff4d4f',
+            success: (res) => {
+              if (res.confirm) {
+                // 清空数据
+                this.setData({
+                  word_mean: []
+                }, () => {
+                  this.saveWordMeanToStorage();
+                  wx.showToast({
+                    title: '已清空所有数据',
+                    icon: 'success'
+                  });
+                });
+              }
+            }
+          });
+        }
+      }
     });
   }
 }) 

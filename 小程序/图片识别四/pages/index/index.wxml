@@ -133,6 +133,13 @@
       </view>
     </view>
     <view wx:if="{{currentTab == 2}}" class="arrange-page">
+      <view class="import-export-buttons">
+        <button class="import-btn" bindtap="handleImport">导入文件</button>
+        <button class="export-btn" bindtap="handleExport">导出文件</button>
+        <button class="delete-all-btn" bindtap="handleDeleteAll">删除全部</button>
+      </view>
+      
+      <!-- 原有的整理页面内容 -->
       <view class="arrange-list">
         <view class="arrange-item" wx:for="{{word_mean}}" wx:key="id">
           <!-- 单词 -->
