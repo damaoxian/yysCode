@@ -2,7 +2,7 @@ const baiduAI = require('../../utils/baiduAI.js');
 
 Page({
   data: {
-    currentTab: 1,
+    currentTab: 0,
     tempImage: '',
     recognizedText: '',
     copy_string: '',
